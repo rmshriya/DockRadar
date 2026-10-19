@@ -1,0 +1,79 @@
+services:
+  egress-proxy:
+    build:
+      context: .
+      dockerfile: Dockerfile.proxy
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    volumes:
+      - ./data:/data
+      - ./config:/config:ro
+    networks: [workload, outbound]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.create_connection(('127.0.0.1',3128),2); s.close()"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  sample-app:
+    build: ./app
+    restart: unless-stopped
+    environment:
+      WORKLOAD_NAME: attendance-api
+      HTTP_PROXY: http://egress-proxy:3128
+      HTTPS_PROXY: http://egress-proxy:3128
+      http_proxy: http://egress-proxy:3128
+      https_proxy: http://egress-proxy:3128
+      NO_PROXY: localhost,127.0.0.1,sample-app
+      no_proxy: localhost,127.0.0.1,sample-app
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    expose: [5000]
+    networks: [workload]
+    depends_on:
+      egress-proxy:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/health',timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    restart: unless-stopped
+    environment:
+      APP_URL: http://sample-app:5000
+      EGRESSEYE_DATA_DIR: /data
+      EGRESSEYE_POLICY: /config/policy.json
+    ports:
+      - "8501:8501"
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 256
+    volumes:
+      - ./data:/data
+      - ./config:/config
+    networks: [workload]
+    depends_on:
+      sample-app:
+        condition: service_healthy
+
+networks:
+  workload:
+    internal: true
+  outbound: {}

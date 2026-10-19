@@ -1,0 +1,7 @@
+__pycache__/
+.venv/
+data/*
+!data/.gitkeep
+config/trusted_digest.json
+config/cosign.key
+config/cosign.pub

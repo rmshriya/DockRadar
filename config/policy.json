@@ -1,0 +1,31 @@
+{
+  "mode": "block",
+  "max_bytes_out": 1000000,
+  "destinations": [
+    {
+      "host": "example.com",
+      "ports": [443],
+      "note": "Safe live connectivity demo"
+    },
+    {
+      "host": "api.github.com",
+      "ports": [443],
+      "note": "Approved source/API endpoint"
+    },
+    {
+      "host": "pypi.org",
+      "ports": [443],
+      "note": "Python package index"
+    },
+    {
+      "host": "files.pythonhosted.org",
+      "ports": [443],
+      "note": "Python package downloads"
+    },
+    {
+      "host": "db.internal.local",
+      "ports": [5432],
+      "note": "Example application database"
+    }
+  ]
+}

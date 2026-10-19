@@ -1,0 +1,7 @@
+{
+  "max_critical": 0,
+  "max_high": 10,
+  "max_secrets": 0,
+  "require_valid_signature": true,
+  "require_digest_match": true
+}
